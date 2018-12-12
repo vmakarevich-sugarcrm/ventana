@@ -1299,43 +1299,21 @@ function SugarApi(args) {
                         }
                     }
 
-                    if (typeof File === 'function') {
-                        blob = new File([this.response], fileName, {
-                            type: contentType
-                        });
-                    } else {
-                        blob = new Blob([this.response], {
-                            type: contentType
-                        });
+                    var binary;
+                    var arrBuf = this.response;
+
+                    for (var i = 0, len = arrBuf.byteLength; i < len; i++) {
+                        binary += String.fromCharCode(arrBuf[i]);
                     }
 
-                    if (typeof window.navigator.msSaveBlob !== 'undefined') {
-                        // this lets us work around IE's HTML7007 blob issue
-                        window.navigator.msSaveBlob(blob, fileName);
-                    } else {
-                        URL = window.URL || window.webkitURL;
-                        downloadUrl = URL.createObjectURL(blob);
-
-                        if (fileName) {
-                            // set up an anchor Element to take advantage of the download attribute
-                            aEl = document.createElement('a');
-                            aEl.download = fileName;
-                            aEl.target = '_blank';
-                            aEl.href = downloadUrl;
-                            // appends the anchor element to the dom
-                            document.body.appendChild(aEl);
-                            // clicks the actual anchor link to begin download process
-                            aEl.click();
-                        } else {
-                            window.location = downloadUrl;
-                        }
-
-                        // perform cleanup of removing the anchor element from the DOM
-                        // as well as revoking the ObjectURL to prevent minor memory leak
-                        setTimeout(function () {
-                            URL.revokeObjectURL(downloadUrl);
-                        }, 100);
-                    }
+                    var base64 = 'data:' + contentType + ';base64,' + window.btoa(binary);
+                    var uri = encodeURI(base64);
+                    var anchor = document.createElement('a');
+                    document.body.appendChild(anchor);
+                    anchor.href = uri;
+                    anchor.download = fileName;
+                    anchor.click();
+                    document.body.removeChild(anchor);
 
                     if (_.isFunction(callback)) {
                         callback(fileName);
